@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мессенджер</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <div id="login-screen">
+      <div class="login-box">
+        <h1>Мессенджер</h1>
+        <form id="login-form">
+          <input type="text" id="login-input" placeholder="Логин" autocomplete="username" required>
+          <input type="password" id="password-input" placeholder="Пароль" autocomplete="current-password" required>
+          <button type="submit">Войти</button>
+        </form>
+        <p id="login-error" class="error"></p>
+      </div>
+    </div>
+
+    <div id="main-screen" class="hidden">
+      <aside class="sidebar">
+        <header class="sidebar-header">
+          <span class="user-name" id="current-user-name"></span>
+          <button type="button" class="btn-icon" id="btn-logout" title="Выйти">⎋</button>
+          <button type="button" class="btn-icon admin-only hidden" id="btn-admin" title="Управление пользователями">⚙</button>
+        </header>
+        <div class="search-wrap">
+          <input type="text" id="contact-search" placeholder="Поиск в диалогах">
+          <button type="button" class="btn-new-chat" id="btn-new-chat" title="Новый чат">+ Чат</button>
+        </div>
+        <ul id="contact-list" class="contact-list"></ul>
+      </aside>
+      <main class="chat-area">
+        <div id="chat-placeholder" class="chat-placeholder">
+          <p>Выберите контакт для начала переписки</p>
+        </div>
+        <div id="chat-active" class="chat-active hidden">
+          <header class="chat-header">
+            <button type="button" class="btn-back" id="btn-chat-back" title="Назад к списку">←</button>
+            <span id="chat-contact-name" class="chat-header-title"></span>
+          </header>
+          <div id="messages-container" class="messages-container"></div>
+          <div class="send-wrap">
+            <div id="emoji-panel" class="picker-panel emoji-panel hidden"></div>
+            <div id="sticker-panel" class="picker-panel sticker-panel hidden"></div>
+            <form id="send-form" class="send-form">
+              <button type="button" class="btn-picker" id="btn-emoji" title="Эмодзи">😀</button>
+              <button type="button" class="btn-picker" id="btn-sticker" title="Стикеры">🎭</button>
+              <input type="text" id="message-input" placeholder="Сообщение" autocomplete="off">
+              <button type="submit" class="btn-send">Отправить</button>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="new-chat-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Новый чат</h2>
+        <button type="button" class="btn-close" id="new-chat-modal-close">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="new-chat-search" placeholder="Поиск пользователя" class="new-chat-search">
+        <ul id="new-chat-user-list" class="new-chat-user-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Пользователи</h2>
+        <button type="button" class="btn-close" id="admin-modal-close">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="admin-add-user">
+          <input type="text" id="new-login" placeholder="Логин" required>
+          <input type="password" id="new-password" placeholder="Пароль" required>
+          <input type="text" id="new-displayname" placeholder="Имя (необязательно)">
+          <button type="submit">Добавить</button>
+        </form>
+        <ul id="admin-user-list" class="admin-user-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

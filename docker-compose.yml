@@ -1,0 +1,23 @@
+services:
+  messenger:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - PORT=3000
+    volumes:
+      - messenger-data:/app/data
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.messenger.rule=Host(`${TRAEFIK_HOST:-messenger.local}`)"
+      - "traefik.http.routers.messenger.entrypoints=web"
+      - "traefik.http.services.messenger.loadbalancer.server.port=3000"
+
+networks:
+  traefik-public:
+    external: true
+
+volumes:
+  messenger-data:
