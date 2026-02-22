@@ -8,10 +8,12 @@ services:
     networks:
       - traefik-public
     labels:
+      - "traefik.docker.network=traefik-public"
       - "traefik.enable=true"
       - "traefik.http.routers.messenger.rule=Host(`chat.1true.ru`)"
       - "traefik.http.routers.messenger.entrypoints=websecure"
       - "traefik.http.routers.messenger.tls=true"
+      - "traefik.http.routers.messenger.tls.certresolver=le"
       - "traefik.http.services.messenger.loadbalancer.server.port=80"
 
 networks:
