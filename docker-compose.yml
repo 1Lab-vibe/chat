@@ -4,16 +4,17 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      - PORT=3000
+      - PORT=${PORT:-3000}
     volumes:
       - messenger-data:/app/data
     networks:
       - traefik-public
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.messenger.rule=Host(`${TRAEFIK_HOST:-messenger.local}`)"
-      - "traefik.http.routers.messenger.entrypoints=web"
-      - "traefik.http.services.messenger.loadbalancer.server.port=3000"
+      - "traefik.http.routers.messenger.rule=Host(`chat.1true.ru`)"
+      - "traefik.http.routers.messenger.entrypoints=websecure"
+      - "traefik.http.routers.messenger.tls=true"
+      - "traefik.http.services.messenger.loadbalancer.server.port=${PORT:-3000}"
 
 networks:
   traefik-public:

@@ -12,6 +12,8 @@ let currentUser = null;
 let currentContact = null;
 let contacts = [];
 let messagesCache = {};
+let pollTimer = null;
+const POLL_INTERVAL_MS = 4000;
 
 function show(el) {
   el.classList.remove('hidden');
@@ -20,7 +22,25 @@ function hide(el) {
   el.classList.add('hidden');
 }
 
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
+function startPolling() {
+  stopPolling();
+  if (!currentContact) return;
+  pollTimer = setInterval(() => {
+    if (document.visibilityState === 'hidden') return;
+    if (!currentContact) return;
+    loadMessages(true);
+  }, POLL_INTERVAL_MS);
+}
+
 function showLogin() {
+  stopPolling();
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('main-screen').classList.add('hidden');
   currentUser = null;
@@ -180,15 +200,16 @@ function selectContact(login) {
   document.getElementById('main-screen').classList.add('mobile-chat-open');
   document.getElementById('chat-contact-name').textContent = c.displayName || c.login;
   closePickerPanels();
-  loadMessages();
+  loadMessages(false);
+  startPolling();
   document.getElementById('message-input').focus();
 }
 
-async function loadMessages() {
+async function loadMessages(silent) {
   if (!currentContact) return;
   const { messages } = await api(`/messages/${encodeURIComponent(currentContact.login)}`);
   messagesCache[currentContact.login] = messages;
-  renderMessages();
+  renderMessages(silent);
 }
 
 function parseMessageContent(text) {
@@ -204,11 +225,12 @@ function getStickerEmoji(id) {
   return s ? s.emoji : '❓';
 }
 
-function renderMessages() {
+function renderMessages(keepScroll) {
   if (!currentContact) return;
   const messages = messagesCache[currentContact.login] || [];
   const container = document.getElementById('messages-container');
   const me = currentUser.login;
+  const wasAtBottom = !keepScroll || container.scrollHeight - container.scrollTop - container.clientHeight < 50;
   container.innerHTML = messages
     .map(m => {
       const isOut = m.from === me;
@@ -226,7 +248,7 @@ function renderMessages() {
       </div>`;
     })
     .join('');
-  container.scrollTop = container.scrollHeight;
+  if (wasAtBottom) container.scrollTop = container.scrollHeight;
 }
 
 function sendMessage(textPayload) {
@@ -243,10 +265,15 @@ document.getElementById('send-form').addEventListener('submit', async (e) => {
   const text = input.value.trim();
   if (!text || !currentContact) return;
   try {
-    await sendMessage(text);
+    const { message } = await sendMessage(text);
     input.value = '';
-    await loadMessages();
-    await loadContacts();
+    if (message && currentContact) {
+      const list = messagesCache[currentContact.login] || [];
+      messagesCache[currentContact.login] = [...list, { id: message.id, from: message.from, to: message.to, text: message.text, ts: message.ts }];
+      renderMessages(false);
+    }
+    setTimeout(() => input.focus(), 0);
+    setTimeout(() => loadContacts(), 500);
   } catch (err) {
     alert(err.message || 'Ошибка отправки');
   }
@@ -284,10 +311,15 @@ function buildStickerPanel() {
       if (!currentContact) return;
       const payload = JSON.stringify({ type: 'sticker', id: btn.dataset.id });
       try {
-        await sendMessage(payload);
+        const { message } = await sendMessage(payload);
         closePickerPanels();
-        await loadMessages();
-        await loadContacts();
+        if (message && currentContact) {
+          const list = messagesCache[currentContact.login] || [];
+          messagesCache[currentContact.login] = [...list, { id: message.id, from: message.from, to: message.to, text: message.text, ts: message.ts }];
+          renderMessages(false);
+        }
+        setTimeout(() => document.getElementById('message-input').focus(), 0);
+        setTimeout(() => loadContacts(), 500);
       } catch (err) {
         alert(err.message || 'Ошибка');
       }
@@ -321,6 +353,7 @@ document.getElementById('btn-sticker').addEventListener('click', () => {
 });
 
 document.getElementById('btn-chat-back').addEventListener('click', () => {
+  stopPolling();
   document.getElementById('main-screen').classList.remove('mobile-chat-open');
   hide(document.getElementById('chat-active'));
   show(document.getElementById('chat-placeholder'));
@@ -427,6 +460,12 @@ document.getElementById('admin-add-user').addEventListener('submit', async (e) =
     loadContacts();
   } catch (err) {
     alert(err.message || 'Ошибка');
+  }
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && currentContact) {
+    loadMessages(true);
   }
 });
 
